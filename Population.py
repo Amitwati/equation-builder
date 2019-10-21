@@ -2,6 +2,8 @@ from DNA import *
 import Nodes
 from collections import Counter
 import math
+import GraphBuilder
+
 
 
 class Population(object):
@@ -10,6 +12,7 @@ class Population(object):
         self.max_dna_height = max_dna_height
         self.silence = False
         self.population = []
+        self.output_train_file=None
 
     def get_best_model(self):
         return self.population[len(self.population)-1]
@@ -19,12 +22,14 @@ class Population(object):
             self.population.append(
                 [DNA(get_rand_base_function(), self.max_dna_height), -1])
 
-
     def evaluate_individual_in_range(self, Individual, func_range, ideal_check):
-        error = 1
-        for i in func_range:
-            error += abs(Individual.evaluate(i) - ideal_check(i))
-        return error
+        try:
+            error = 1
+            for i in func_range:
+                error += abs(Individual.evaluate(i) - ideal_check(i))
+            return error
+        except ZeroDivisionError:
+            return -1
 
     def normal_fitness(self, fitness, _max):
         if fitness >= _max :
@@ -38,8 +43,10 @@ class Population(object):
         maximum = max(self.population, key=lambda child: child[1])[1]
         
         for child in self.population:
-            temp = self.normal_fitness(child[1], min([fitness_tolerance,maximum]))
-            child[1] = temp
+            if child[1] >= 0:
+                child[1] = self.normal_fitness(child[1], min([fitness_tolerance,maximum]))
+            else:
+                child[1] = 0
 
 
         self.population.sort(key=lambda child: child[1])
@@ -76,8 +83,23 @@ class Population(object):
 
         self.population = list(map(lambda child:[child,-1,Nodes.getTreeHeight(child.data)],temp))
 
+    def print_gen_to_file(self,gen_index,best_fitness):
+        if self.output_train_file is not None :
+            f = open(self.output_train_file, "a")
+            f.write(str(gen_index) + "," + str(best_fitness)+"\n")
+            f.close()
+
+    def format_output_file(self):
+        if self.output_train_file is not None:
+            open(self.output_train_file, 'w').close()
+
+    def show_train_graph(self):
+        GraphBuilder.show_graph(self.output_train_file)
+    
     def train_population(self,train_function,train_range,fitness_threshold = 0.95,generation_limit = -1,fitness_tolerance = 1000):
         gen_indx = 0
+        
+        self.format_output_file()
 
         self.create_random_population()
         self.calculate_gen_fitness(train_range,train_function,fitness_tolerance)
@@ -85,6 +107,8 @@ class Population(object):
         best_model = self.get_best_model()
         best_model_dna = best_model[0]
         best_model_fitness = best_model[1]
+
+        self.print_gen_to_file(gen_indx,best_model_fitness)
 
         if not self.silence :
             print("generation " + str(gen_indx) + " fitness " + str(best_model_fitness))
@@ -98,6 +122,8 @@ class Population(object):
             best_model_dna = best_model[0]
             best_model_fitness = best_model[1]
             gen_indx += 1
+
+            self.print_gen_to_file(gen_indx,best_model_fitness)
 
             if not self.silence :
                 print("generation " + str(gen_indx) + " fitness " + str(best_model_fitness))

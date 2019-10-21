@@ -1,5 +1,5 @@
 import random
-
+import math
 max_depth = 6
 
 
@@ -43,6 +43,18 @@ class Number(Node):
     def evaluate(self, param):
         return self.value
 
+class Param(Node):
+    def __init__(self):
+        Node.__init__(self)
+        self.numOfChildren = 0
+        self.isTerminal = True
+        self.infChildren = False
+
+    def get_str(self):
+        return "x"
+
+    def evaluate(self, param):
+        return param
 
 class Input(Node):
     def __init__(self, get_input):
@@ -161,10 +173,7 @@ class Divide(Node):
         return "(" + self.children[0].get_str() + " / " + self.children[1].get_str() + ")"
 
     def evaluate(self, param):
-        try:
-            return (self.children[0].evaluate(param))/(self.children[1].evaluate(param))
-        except ZeroDivisionError:
-            return 1
+        return (self.children[0].evaluate(param))/(self.children[1].evaluate(param))
 
 
 class Power(Node):
@@ -196,7 +205,6 @@ class Max(Node):
         Node.__init__(self)
         self.numOfChildren = 2
         self.infChildren = True
-        self.isFunction = True
         self.mark = "max"
         self.children = []
 
@@ -224,7 +232,6 @@ class Min(Node):
         Node.__init__(self)
         self.numOfChildren = 2
         self.infChildren = True
-        self.isFunction = True
         self.mark = "max"
         self.children = []
 
@@ -246,6 +253,28 @@ class Min(Node):
             eval_list.append(child.evaluate(param))
         return min(eval_list)
 
+class Sin(Node):
+    def __init__(self):
+        Node.__init__(self)
+        self.numOfChildren = 1
+        self.infChildren = False
+        self.mark = "sin"
+        self.children = []
+
+    def setHeight(self, height):
+        self.height = height
+        for child in self.children:
+            child.setHeight(self.height + 1)
+
+    def get_str(self):
+        return "sin(" + self.children[0].get_str() +")"
+
+    def addChild(self, child):
+        child.height = self.height + 1
+        self.children += [child]
+
+    def evaluate(self, param):
+        return math.sin(self.children[0].evaluate(param))
 
 def getNode(node):
     if node == "Plus":
@@ -262,6 +291,8 @@ def getNode(node):
         return Max()
     elif node == "MIN":
         return Min()
+    elif node == "SIN":
+        return Sin()
 
 
 def getTreeHeight(tree):

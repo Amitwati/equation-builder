@@ -1,12 +1,16 @@
 import random
 from Nodes import *
 import copy
+import math
 
 base_function = [
     [lambda param: param**2, "(x^2)"],
-    [lambda param: param/2, "(x/2)"],
-    [lambda param: param, "x"]
 ]
+
+
+num_of_terminals = 3
+# nodeList = ["Number",, "Plus", "Minus","Multiply", "Divide","SIN"]
+nodeList = ["Number","PARAM", "Plus", "Minus","Multiply", "Divide","SIN"]
 
 
 def mutateTree(tree):
@@ -32,6 +36,9 @@ def mutateTree(tree):
             return temp
 
         temp = temp.children[rand_indx]
+
+    num_of_children = len(temp.children)
+    rand_indx = random.randint(0, num_of_children-1)
 
     temp.children[rand_indx] = DNA(get_rand_base_function(), 4).data
     organize(tree)
@@ -62,17 +69,20 @@ def createChild(father, mother):
 
     rand_node_depth = random.randint(0, getTreeHeight(upper_tree))
 
-    num_of_children = len(middle_node.children)
-    rand_indx = random.randint(0, num_of_children-1)
+    # if middle_node.mark == "sin":
+    #     print("here!")
+    
 
     for _ in range(rand_node_depth-1):
         num_of_children = len(middle_node.children)
-        rand_indx = random.randint(0, num_of_children-1)
+        middle_rand_indx = random.randint(0, num_of_children-1)
 
-        if middle_node.children[rand_indx].isTerminal:
+        if middle_node.children[middle_rand_indx].isTerminal:
             break
 
-        middle_node = middle_node.children[rand_indx]
+        middle_node = middle_node.children[middle_rand_indx]
+
+    middle_rand_indx = random.randint(0, middle_node.numOfChildren-1)
 
     # ------------ finished get middle_node
 
@@ -92,7 +102,7 @@ def createChild(father, mother):
     # ------------ start get bottom_tree
 
     # if middle_node and rand_indx >= 0:
-    middle_node.children[rand_indx] = bottom_tree
+    middle_node.children[middle_rand_indx] = bottom_tree
 
     organize(upper_tree)
 
@@ -113,9 +123,6 @@ def print_eval_function(tree):
 
 class DNA(object):
 
-    nodeList = ["Number", "Input", "Plus", "Minus",
-                "Multiply", "Divide"]
-
     def __init__(self, inputFunction, max_height, optionalData=None):
         self.max_height = max_height
         self.input_func = inputFunction
@@ -129,17 +136,21 @@ class DNA(object):
             self.data = optionalData
 
     def pickRandomNodeType(self):
-        indx = random.randint(0, len(self.nodeList)-1)
-        return self.nodeList[indx]
+        indx = random.randint(0, len(nodeList)-1)
+        return nodeList[indx]
 
     def buildRandomTree(self, inputFunction, max_height):
+        global num_of_terminals
         if max_height == 1:
-            head_type = self.nodeList[random.randint(0, 2)]
+            head_type = nodeList[random.randint(0, num_of_terminals)]
             if head_type == "Number":
                 head = Number(random.randint(0, 100))
-            else:
+            elif head_type == "Input":
                 head = Input(inputFunction)
-            return head
+                return head
+            else:
+                head = Param()
+                return head
         else:
             head_type = self.pickRandomNodeType()
             if head_type == "Number":
@@ -148,20 +159,26 @@ class DNA(object):
             elif head_type == "Input":
                 head = Input(inputFunction)
                 return head
+            elif head_type == "PARAM":
+                head = Param()
+                return head
+            
 
             head = getNode(head_type)
             self._buildRandomTree(head, inputFunction, max_height-1)
             return head
 
     def _buildRandomTree(self, head, inputFunction, max_height):
-
+        global num_of_terminals
         if max_height == 2:
             for _ in range(0, head.numOfChildren):
-                temp = random.randint(0, 2)
-                if temp == 0:
+                temp = random.randint(0, num_of_terminals)
+                if nodeList[temp] == "Number":
                     head.addChild(Number(random.randint(0, 100)))
-                else:
+                elif nodeList[temp] == "Input":
                     head.addChild(Input(inputFunction))
+                else:
+                    head.addChild(Param())
             return head
 
         for i in range(0, head.numOfChildren):
@@ -171,6 +188,9 @@ class DNA(object):
                 continue
             elif childType == "Input":
                 head.addChild(Input(inputFunction))
+                continue
+            else:
+                head.addChild(Param())
                 continue
             head.addChild(getNode(childType))
             self._buildRandomTree(
