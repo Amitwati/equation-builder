@@ -37,4 +37,5 @@ print_eval_function(best_model_stats[0].data)
 ModelLoader.save_dna('best_model_cos.dna', best_model_stats[0].data)
 
 # uncomment the following line to load the best model to 'best_model_cos.dna' file
-# dna = ModelLoader.load_dna('model_cos.txt')
+# dna = ModelLoader.load_dna('best_model_cos.dna')
+# print_eval_function(dna)
