@@ -1,7 +1,6 @@
 from Population import *
 from DNA import *
 import ModelLoader
-import pickle
 
 # we want to create new population in size of 1000 models
 populationSize = 1000
