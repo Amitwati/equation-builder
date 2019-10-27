@@ -274,7 +274,10 @@ class Sin(Node):
         self.children += [child]
 
     def evaluate(self, param):
-        return math.sin(self.children[0].evaluate(param))
+        try:
+            return math.sin(self.children[0].evaluate(param))
+        except ValueError:
+            return 0
 
 def getNode(node):
     if node == "Plus":
